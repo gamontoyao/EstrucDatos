@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arrays — Inserción y Eliminación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --bg-soft:#f6f7fa;
+    --ink:#13151a;
+    --ink-soft:#6b7280;
+    --line:#e7e9ee;
+    --blue:#2f6fed;
+    --purple:#8248e5;
+    --green:#0f8a4f;
+    --orange:#e2650f;
+    --pink:#d6316b;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    line-height:1.55;
+  }
+
+  .hero{
+    padding:56px 24px 30px;
+    max-width:1080px;
+    margin:0 auto;
+    border-bottom:1px solid var(--line);
+  }
+  .hero .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    color:var(--blue);
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  .hero h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:clamp(28px, 4.4vw, 42px);
+    letter-spacing:-0.02em;
+    margin-top:10px;
+  }
+  .hero h1 span{color:var(--purple);}
+  .hero p{
+    margin-top:12px;
+    max-width:66ch;
+    color:var(--ink-soft);
+    font-size:15px;
+  }
+
+  .app{
+    max-width:1080px;
+    margin:0 auto;
+    padding:34px 24px 90px;
+    display:grid;
+    grid-template-columns:290px 1fr;
+    gap:26px;
+    align-items:start;
+  }
+  @media (max-width:860px){
+    .app{ grid-template-columns:1fr; }
+  }
+
+  /* ---------- panel de control ---------- */
+  .controls{
+    background:var(--bg-soft);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:22px;
+    position:sticky;
+    top:20px;
+  }
+  @media (max-width:860px){ .controls{ position:relative; top:0; } }
+
+  .ctrl-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    margin-bottom:8px;
+    margin-top:20px;
+  }
+  .ctrl-label:first-child{ margin-top:0; }
+
+  .tabs{ display:flex; gap:8px; }
+  .tab{
+    flex:1;
+    padding:11px 8px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:var(--bg);
+    color:var(--ink-soft);
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .tab[data-op="insert"].active{ background:var(--blue); border-color:var(--blue); color:#fff; }
+  .tab[data-op="delete"].active{ background:var(--pink); border-color:var(--pink); color:#fff; }
+
+  .pos-row{ display:flex; gap:8px; }
+  .posBtn{
+    flex:1;
+    padding:9px 6px;
+    border-radius:9px;
+    border:1.5px solid var(--line);
+    background:var(--bg);
+    color:var(--ink-soft);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .controls[data-op="insert"] .posBtn.active{ background:rgba(47,111,237,.12); border-color:var(--blue); color:var(--blue); }
+  .controls[data-op="delete"] .posBtn.active{ background:rgba(214,49,107,.12); border-color:var(--pink); color:var(--pink); }
+
+  .value-row{
+    display:flex;
+    gap:8px;
+  }
+  .value-row input{
+    flex:1;
+    border:1.5px solid var(--line);
+    border-radius:9px;
+    padding:9px 10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:15px;
+    font-weight:600;
+    color:var(--ink);
+    background:var(--bg);
+    width:0;
+  }
+  .value-row input:focus{ outline:none; border-color:var(--blue); }
+  .diceBtn{
+    width:40px;
+    border-radius:9px;
+    border:1.5px solid var(--line);
+    background:var(--bg);
+    cursor:pointer;
+    font-size:16px;
+  }
+  .diceBtn:hover{ background:var(--bg-soft); }
+
+  .execBtn{
+    margin-top:22px;
+    width:100%;
+    padding:13px;
+    border:none;
+    border-radius:10px;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:15px;
+    color:#fff;
+    cursor:pointer;
+    transition:opacity .15s ease, transform .1s ease;
+  }
+  .controls[data-op="insert"] .execBtn{ background:var(--blue); }
+  .controls[data-op="delete"] .execBtn{ background:var(--pink); }
+  .execBtn:hover{ opacity:.92; }
+  .execBtn:active{ transform:scale(.98); }
+  .execBtn:disabled{ opacity:.45; cursor:not-allowed; }
+
+  .resetBtn{
+    margin-top:10px;
+    width:100%;
+    padding:10px;
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    background:transparent;
+    color:var(--ink-soft);
+    font-family:'Inter', sans-serif;
+    font-weight:500;
+    font-size:13.5px;
+    cursor:pointer;
+  }
+  .resetBtn:hover{ background:var(--bg); border-color:var(--ink-soft); }
+
+  .legend{
+    margin-top:24px;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .legend-item{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .swatch{ width:14px; height:14px; border-radius:4px; flex-shrink:0; }
+  .swatch.default{ background:linear-gradient(135deg, var(--blue), var(--purple)); }
+  .swatch.move{ background:var(--bg); border:2px solid var(--orange); }
+  .swatch.new{ background:var(--green); }
+  .swatch.del{ background:var(--pink); }
+
+  /* ---------- panel visual ---------- */
+  .panel{
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:28px 26px 22px;
+    transition:box-shadow .2s ease;
+  }
+  .panel.shake{ animation:shake .5s ease; }
+  @keyframes shake{
+    0%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-6px); }
+    40%{ transform:translateX(6px); }
+    60%{ transform:translateX(-4px); }
+    80%{ transform:translateX(4px); }
+  }
+
+  .panel-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .panel-top h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:17px;
+    font-weight:600;
+  }
+  .sizeReadout{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+
+  .track-scroll{ overflow-x:auto; padding-bottom:6px; }
+  .track-wrap{ position:relative; width:max-content; margin:0 auto; }
+
+  .slots-bg{ display:flex; gap:12px; }
+  .bg-slot{ width:64px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .bg-slot .box{ width:64px; height:64px; border:2px dashed var(--line); border-radius:12px; }
+  .bg-slot .idx{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--ink-soft); }
+
+  .items-layer{
+    position:absolute;
+    top:0; left:0;
+    width:100%;
+    height:64px;
+  }
+  .item{
+    position:absolute;
+    top:0; left:0;
+    width:64px; height:64px;
+    border-radius:12px;
+    background:linear-gradient(135deg, var(--blue), var(--purple));
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:17px;
+    box-shadow:0 6px 16px -6px rgba(47,17,150,.35);
+    transition:transform .55s cubic-bezier(.4,0,.2,1), opacity .35s ease, background-color .5s ease, box-shadow .3s ease;
+  }
+  .item.fresh{ background:var(--green); }
+  .item.will-move{ box-shadow:0 0 0 3px var(--orange), 0 6px 16px -6px rgba(47,17,150,.35); }
+  .item.to-delete{ background:var(--pink); box-shadow:0 0 0 3px var(--pink); }
+
+  .meta-row{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    margin-top:26px;
+    flex-wrap:wrap;
+  }
+  .counter{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13.5px;
+    color:var(--ink-soft);
+  }
+  .counter b{ color:var(--ink); font-size:16px; }
+  .bigO{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    font-weight:700;
+    padding:5px 12px;
+    border-radius:20px;
+    background:var(--bg-soft);
+    color:var(--ink-soft);
+  }
+  .bigO.good{ background:rgba(15,138,79,.12); color:var(--green); }
+  .bigO.warn{ background:rgba(226,101,15,.12); color:var(--orange); }
+
+  .log{
+    margin-top:16px;
+    padding:13px 16px;
+    background:var(--bg-soft);
+    border-left:3px solid var(--blue);
+    border-radius:0 8px 8px 0;
+    font-size:13.5px;
+    color:var(--ink);
+    transition:border-color .2s ease, color .2s ease;
+  }
+  .log.warnFlash{ border-color:var(--pink); color:var(--pink); }
+
+  footer{
+    text-align:center;
+    padding:30px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="eyebrow">demo interactiva · estructuras de datos</div>
+    <h1>Arrays: <span>inserción y eliminación</span></h1>
+    <p>Este array tiene capacidad fija de <b>8 posiciones</b> — como en memoria real. Elige una operación, la posición (inicio, medio o final) y observa exactamente cuántos elementos se tienen que mover.</p>
+  </div>
+
+  <div class="app">
+
+    <div class="controls" id="controls" data-op="insert">
+
+      <div class="ctrl-label">Operación</div>
+      <div class="tabs">
+        <button class="tab active" data-op="insert">Insertar</button>
+        <button class="tab" data-op="delete">Eliminar</button>
+      </div>
+
+      <div class="ctrl-label">Posición</div>
+      <div class="pos-row">
+        <button class="posBtn" data-pos="inicio">Inicio</button>
+        <button class="posBtn" data-pos="medio">Medio</button>
+        <button class="posBtn active" data-pos="final">Final</button>
+      </div>
+
+      <div id="valueBlock">
+        <div class="ctrl-label">Valor a insertar</div>
+        <div class="value-row">
+          <input type="number" id="valueInput" maxlength="2">
+          <button class="diceBtn" id="diceBtn" title="Generar valor aleatorio">🎲</button>
+        </div>
+      </div>
+
+      <button class="execBtn" id="execBtn">Ejecutar operación</button>
+      <button class="resetBtn" id="resetBtn">↺ Reiniciar array</button>
+
+      <div class="legend">
+        <div class="legend-item"><span class="swatch default"></span> Elemento del array</div>
+        <div class="legend-item"><span class="swatch move"></span> Se va a mover</div>
+        <div class="legend-item"><span class="swatch new"></span> Elemento nuevo</div>
+        <div class="legend-item"><span class="swatch del"></span> Se está eliminando</div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel">
+      <div class="panel-top">
+        <h3>Array en memoria</h3>
+        <div class="sizeReadout" id="sizeReadout">5 / 8</div>
+      </div>
+
+      <div class="track-scroll">
+        <div class="track-wrap" id="trackWrap">
+          <div class="slots-bg" id="slotsBg"></div>
+          <div class="items-layer" id="itemsLayer"></div>
+        </div>
+      </div>
+
+      <div class="meta-row">
+        <div class="counter">Movimientos: <b id="moveCount">0</b></div>
+        <div class="bigO" id="bigO">—</div>
+      </div>
+
+      <div class="log" id="logText">Elige una operación y presiona “Ejecutar” para comenzar.</div>
+    </div>
+
+  </div>
+
+  <footer>Arrays — inserción y eliminación · demo de clase</footer>
+
+<script>
+  const CAPACITY = 8;
+  const SLOT = 76; // 64px caja + 12px gap
+  const INITIAL = [12, 47, 8, 23, 56];
+
+  const slotsBg = document.getElementById('slotsBg');
+  const itemsLayer = document.getElementById('itemsLayer');
+  const trackWrap = document.getElementById('trackWrap');
+  const controlsEl = document.getElementById('controls');
+  const valueBlock = document.getElementById('valueBlock');
+  const valueInput = document.getElementById('valueInput');
+  const diceBtn = document.getElementById('diceBtn');
+  const execBtn = document.getElementById('execBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const moveCountEl = document.getElementById('moveCount');
+  const bigOEl = document.getElementById('bigO');
+  const logText = document.getElementById('logText');
+  const sizeReadout = document.getElementById('sizeReadout');
+  const panel = document.getElementById('panel');
+
+  let items = [];
+  const domMap = new Map();
+  let currentOp = 'insert';
+  let currentPos = 'final';
+  let busy = false;
+
+  function uid(){ return 'i' + Math.random().toString(36).slice(2, 9); }
+  function randomValue(){ return Math.floor(Math.random() * 90) + 10; }
+  function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  function buildSlotsBg(){
+    slotsBg.innerHTML = '';
+    trackWrap.style.width = (CAPACITY * SLOT - 12) + 'px';
+    for(let i = 0; i < CAPACITY; i++){
+      const slot = document.createElement('div');
+      slot.className = 'bg-slot';
+      slot.innerHTML = `<div class="box"></div><div class="idx">${i}</div>`;
+      slotsBg.appendChild(slot);
+    }
+  }
+
+  function updateSizeReadout(){
+    sizeReadout.textContent = `${items.length} / ${CAPACITY}`;
+  }
+
+  function resetArray(){
+    itemsLayer.innerHTML = '';
+    domMap.clear();
+    items = INITIAL.map(v => ({ id: uid(), value: v }));
+    items.forEach((it, idx) => {
+      const el = document.createElement('div');
+      el.className = 'item';
+      el.dataset.id = it.id;
+      el.textContent = it.value;
+      el.style.transition = 'none';
+      el.style.transform = `translateX(${idx * SLOT}px) scale(1)`;
+      el.style.opacity = '1';
+      itemsLayer.appendChild(el);
+      domMap.set(it.id, el);
+      requestAnimationFrame(() => { el.style.transition = ''; });
+    });
+    moveCountEl.textContent = '0';
+    bigOEl.textContent = '—';
+    bigOEl.className = 'bigO';
+    logText.textContent = 'Elige una operación y presiona “Ejecutar” para comenzar.';
+    logText.classList.remove('warnFlash');
+    updateSizeReadout();
+    valueInput.value = randomValue();
+  }
+
+  function flashWarning(msg){
+    logText.textContent = msg;
+    logText.classList.add('warnFlash');
+    panel.classList.add('shake');
+    setTimeout(() => {
+      logText.classList.remove('warnFlash');
+      panel.classList.remove('shake');
+    }, 550);
+  }
+
+  function setBusy(state){
+    busy = state;
+    execBtn.disabled = state;
+    resetBtn.disabled = state;
+  }
+
+  function resolveIndex(){
+    const n = items.length;
+    if(currentOp === 'insert'){
+      if(currentPos === 'inicio') return 0;
+      if(currentPos === 'medio') return Math.floor(n / 2);
+      return n; // final
+    } else {
+      if(n === 0) return 0;
+      if(currentPos === 'inicio') return 0;
+      if(currentPos === 'medio') return Math.floor((n - 1) / 2);
+      return n - 1; // final
+    }
+  }
+
+  function finalizeOp(shiftedCount, idx, op, value){
+    moveCountEl.textContent = shiftedCount;
+    if(shiftedCount === 0){
+      bigOEl.textContent = 'O(1)';
+      bigOEl.className = 'bigO good';
+    } else {
+      bigOEl.textContent = `O(n) · n = ${shiftedCount}`;
+      bigOEl.className = 'bigO warn';
+    }
+    const accion = op === 'insert' ? `Insertar ${value}` : `Eliminar ${value}`;
+    const explicacion = shiftedCount === 0
+      ? 'no fue necesario mover ningún elemento — costo constante.'
+      : `se corrieron ${shiftedCount} elemento(s) — el costo depende del tamaño del array.`;
+    logText.textContent = `${accion} en el índice ${idx} → ${explicacion}`;
+    updateSizeReadout();
+  }
+
+  async function doInsert(idx){
+    if(items.length >= CAPACITY){
+      flashWarning('Array lleno (capacidad 8) — no se puede insertar sin redimensionar.');
+      return;
+    }
+    setBusy(true);
+    const value = valueInput.value !== '' ? valueInput.value : randomValue();
+    const shiftedCount = items.length - idx;
+
+    if(shiftedCount > 0){
+      for(let i = idx; i < items.length; i++) domMap.get(items[i].id).classList.add('will-move');
+      await wait(450);
+      for(let i = idx; i < items.length; i++){
+        domMap.get(items[i].id).style.transform = `translateX(${(i + 1) * SLOT}px) scale(1)`;
+      }
+      await wait(560);
+      for(let i = idx; i < items.length; i++) domMap.get(items[i].id).classList.remove('will-move');
+    }
+
+    const newItem = { id: uid(), value };
+    items.splice(idx, 0, newItem);
+
+    const el = document.createElement('div');
+    el.className = 'item fresh';
+    el.dataset.id = newItem.id;
+    el.textContent = value;
+    el.style.transform = `translateX(${idx * SLOT}px) scale(.5)`;
+    el.style.opacity = '0';
+    itemsLayer.appendChild(el);
+    domMap.set(newItem.id, el);
+    requestAnimationFrame(() => {
+      el.style.transform = `translateX(${idx * SLOT}px) scale(1)`;
+      el.style.opacity = '1';
+    });
+    await wait(500);
+    el.classList.remove('fresh');
+
+    finalizeOp(shiftedCount, idx, 'insert', value);
+    valueInput.value = randomValue();
+    setBusy(false);
+  }
+
+  async function doDelete(idx){
+    if(items.length === 0){
+      flashWarning('El array está vacío — no hay nada que eliminar.');
+      return;
+    }
+    setBusy(true);
+    const target = items[idx];
+    const el = domMap.get(target.id);
+
+    el.classList.add('to-delete');
+    await wait(450);
+    el.classList.add('removing');
+    el.style.transform = `translateX(${idx * SLOT}px) scale(.5)`;
+    el.style.opacity = '0';
+    await wait(400);
+    el.remove();
+    domMap.delete(target.id);
+    items.splice(idx, 1);
+
+    const shiftedCount = items.length - idx;
+    if(shiftedCount > 0){
+      for(let i = idx; i < items.length; i++) domMap.get(items[i].id).classList.add('will-move');
+      for(let i = idx; i < items.length; i++){
+        domMap.get(items[i].id).style.transform = `translateX(${i * SLOT}px) scale(1)`;
+      }
+      await wait(560);
+      for(let i = idx; i < items.length; i++) domMap.get(items[i].id).classList.remove('will-move');
+    }
+
+    finalizeOp(shiftedCount, idx, 'delete', target.value);
+    setBusy(false);
+  }
+
+  // ---- eventos UI ----
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(busy) return;
+      currentOp = btn.dataset.op;
+      document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b === btn));
+      controlsEl.dataset.op = currentOp;
+      valueBlock.style.display = currentOp === 'insert' ? 'block' : 'none';
+      execBtn.textContent = currentOp === 'insert' ? 'Ejecutar operación' : 'Ejecutar operación';
+    });
+  });
+
+  document.querySelectorAll('.posBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(busy) return;
+      currentPos = btn.dataset.pos;
+      document.querySelectorAll('.posBtn').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+
+  diceBtn.addEventListener('click', () => { valueInput.value = randomValue(); });
+
+  execBtn.addEventListener('click', () => {
+    if(busy) return;
+    const idx = resolveIndex();
+    if(currentOp === 'insert') doInsert(idx); else doDelete(idx);
+  });
+
+  resetBtn.addEventListener('click', () => { if(!busy) resetArray(); });
+
+  // ---- init ----
+  buildSlotsBg();
+  resetArray();
+</script>
+
+</body>
+</html>
