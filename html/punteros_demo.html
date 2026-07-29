@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Punteros en C++</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --bg-soft:#f6f7fa;
+    --ink:#13151a;
+    --ink-soft:#6b7280;
+    --line:#e7e9ee;
+    --blue:#2f6fed;
+    --purple:#8248e5;
+    --green:#0f8a4f;
+    --orange:#e2650f;
+    --pink:#d6316b;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    line-height:1.55;
+  }
+
+  .hero{
+    padding:56px 24px 30px;
+    max-width:1080px;
+    margin:0 auto;
+    border-bottom:1px solid var(--line);
+  }
+  .hero .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    color:var(--blue);
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  .hero h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:clamp(28px, 4.4vw, 42px);
+    letter-spacing:-0.02em;
+    margin-top:10px;
+  }
+  .hero h1 span{color:var(--purple);}
+  .hero p{
+    margin-top:12px;
+    max-width:68ch;
+    color:var(--ink-soft);
+    font-size:15px;
+  }
+  .hero code{
+    font-family:'JetBrains Mono', monospace;
+    background:var(--bg-soft);
+    padding:1px 6px;
+    border-radius:5px;
+    font-size:13.5px;
+  }
+
+  .app{
+    max-width:1080px;
+    margin:0 auto;
+    padding:34px 24px 90px;
+    display:grid;
+    grid-template-columns:290px 1fr;
+    gap:26px;
+    align-items:start;
+  }
+  @media (max-width:860px){ .app{ grid-template-columns:1fr; } }
+
+  /* ---------- panel de control ---------- */
+  .controls{
+    background:var(--bg-soft);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:22px;
+    position:sticky;
+    top:20px;
+  }
+  @media (max-width:860px){ .controls{ position:relative; top:0; } }
+
+  .ctrl-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    margin-bottom:8px;
+    margin-top:20px;
+  }
+  .ctrl-label:first-child{ margin-top:0; }
+
+  .varBtns{ display:flex; flex-direction:column; gap:8px; }
+  .varBtn{
+    padding:10px 12px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'JetBrains Mono', monospace;
+    font-weight:600;
+    font-size:13.5px;
+    text-align:left;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .varBtn:hover{ border-color:var(--purple); }
+  .varBtn.active{ background:rgba(130,72,229,.1); border-color:var(--purple); color:var(--purple); }
+
+  .op-group{ display:flex; flex-direction:column; gap:8px; }
+  .opBtn{
+    padding:10px 12px;
+    border-radius:10px;
+    border:none;
+    background:var(--blue);
+    color:#fff;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    cursor:pointer;
+    transition:opacity .15s ease, transform .1s ease;
+  }
+  .opBtn:hover{ opacity:.92; }
+  .opBtn:active{ transform:scale(.98); }
+  .opBtn:disabled{ opacity:.4; cursor:not-allowed; }
+
+  .value-row{ display:flex; gap:8px; }
+  .value-row input{
+    flex:1;
+    border:1.5px solid var(--line);
+    border-radius:9px;
+    padding:9px 10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:14px;
+    font-weight:600;
+    color:var(--ink);
+    background:var(--bg);
+    width:0;
+  }
+  .value-row input:focus{ outline:none; border-color:var(--blue); }
+  .value-row input:disabled{ opacity:.5; }
+
+  .resetBtn{
+    margin-top:22px;
+    width:100%;
+    padding:10px;
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    background:transparent;
+    color:var(--ink-soft);
+    font-family:'Inter', sans-serif;
+    font-weight:500;
+    font-size:13.5px;
+    cursor:pointer;
+  }
+  .resetBtn:hover{ background:var(--bg); border-color:var(--ink-soft); }
+
+  .legend{
+    margin-top:22px;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .legend-item{ display:flex; align-items:center; gap:9px; font-size:12.5px; color:var(--ink-soft); }
+  .swatch{ width:14px; height:14px; border-radius:4px; flex-shrink:0; }
+  .swatch.varbox{ background:linear-gradient(135deg, var(--blue), var(--purple)); }
+  .swatch.ptrbox{ background:var(--bg); border:2px dashed var(--purple); }
+  .swatch.arrow{ background:var(--orange); height:3px; border-radius:2px; }
+  .swatch.fresh{ background:var(--green); }
+
+  /* ---------- panel visual ---------- */
+  .panel{
+    background:var(--bg);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:30px 26px 22px;
+  }
+  .panel h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:17px;
+    font-weight:600;
+    margin-bottom:26px;
+  }
+
+  .stage{
+    position:relative;
+    min-height:280px;
+    padding-top:6px;
+  }
+
+  .var-row{
+    display:flex;
+    justify-content:center;
+    gap:34px;
+    flex-wrap:wrap;
+    position:relative;
+    z-index:2;
+  }
+  .var-box{
+    width:132px;
+    background:linear-gradient(135deg, var(--blue), var(--purple));
+    border-radius:14px;
+    padding:14px 12px;
+    color:#fff;
+    text-align:center;
+    transition:box-shadow .3s ease, transform .2s ease;
+  }
+  .var-box .vname{ font-family:'JetBrains Mono', monospace; font-size:12.5px; opacity:.85; }
+  .var-box .vaddr{ font-family:'JetBrains Mono', monospace; font-size:11px; opacity:.65; margin-top:2px; }
+  .var-box .vval{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:24px;
+    margin-top:8px;
+    transition:transform .25s ease;
+  }
+  .var-box.pulse-read{ box-shadow:0 0 0 4px rgba(47,111,237,.35); }
+  .vval.read-hl{ animation:readFlash .75s ease; }
+  @keyframes readFlash{
+    0%{ color:#fff; transform:scale(1); text-shadow:none; }
+    35%{ color:#ffd166; transform:scale(1.35); text-shadow:0 0 18px rgba(255,209,102,.85); }
+    100%{ color:#fff; transform:scale(1); text-shadow:none; }
+  }
+  .var-box.pulse-write .vval{ animation:writePulse .6s ease; }
+  .var-box.pulse-write{ background:linear-gradient(135deg, var(--green), var(--blue)); }
+  @keyframes writePulse{
+    0%{ transform:scale(1); }
+    40%{ transform:scale(1.18); }
+    100%{ transform:scale(1); }
+  }
+
+  svg.arrow-layer{
+    position:absolute;
+    top:0; left:0;
+    width:100%; height:100%;
+    z-index:1;
+    pointer-events:none;
+  }
+
+  .ptr-row{
+    display:flex;
+    justify-content:center;
+    margin-top:78px;
+    position:relative;
+    z-index:2;
+  }
+  .ptr-box{
+    width:190px;
+    background:var(--bg);
+    border:2px dashed var(--purple);
+    border-radius:14px;
+    padding:14px 14px;
+    text-align:center;
+  }
+  .ptr-box .pname{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:14px;
+    color:var(--purple);
+  }
+  .ptr-box .paddr{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink-soft); margin-top:2px; }
+  .ptr-box .pval{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color:var(--ink);
+    margin-top:10px;
+    min-height:18px;
+  }
+  .ptr-box .pval.empty{ color:var(--ink-soft); font-style:italic; }
+
+  .log{
+    margin-top:30px;
+    padding:13px 16px;
+    background:var(--bg-soft);
+    border-left:3px solid var(--blue);
+    border-radius:0 8px 8px 0;
+    font-size:13.5px;
+    color:var(--ink);
+  }
+
+  footer{
+    text-align:center;
+    padding:30px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="eyebrow">demo interactiva · punteros</div>
+    <h1>Punteros en <span>C++</span></h1>
+    <p>Un puntero no guarda un valor normal: guarda la <b>dirección</b> de otra variable. Usa <code>&</code> para apuntar, <code>*</code> para leer o modificar lo que hay en esa dirección, y observa la flecha moverse cuando reasignas el puntero.</p>
+  </div>
+
+  <div class="app">
+
+    <div class="controls">
+
+      <div class="ctrl-label">1. Apuntar el puntero (p = &var)</div>
+      <div class="varBtns" id="varBtns"></div>
+
+      <div class="ctrl-label">2. Operaciones con *p</div>
+      <div class="op-group">
+        <button class="opBtn" id="readBtn" disabled>Leer *p</button>
+        <div class="value-row">
+          <input type="number" id="writeInput" placeholder="nuevo valor" disabled>
+          <button class="opBtn" id="writeBtn" disabled style="width:auto; white-space:nowrap;">Escribir *p</button>
+        </div>
+      </div>
+
+      <button class="resetBtn" id="resetBtn">↺ Reiniciar</button>
+
+      <div class="legend">
+        <div class="legend-item"><span class="swatch varbox"></span> Variable en memoria</div>
+        <div class="legend-item"><span class="swatch ptrbox"></span> Puntero (guarda una dirección)</div>
+        <div class="legend-item"><span class="swatch arrow"></span> p apunta a...</div>
+        <div class="legend-item"><span class="swatch fresh"></span> Valor modificado vía *p</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Memoria</h3>
+
+      <div class="stage" id="stage">
+        <svg class="arrow-layer" id="arrowLayer">
+          <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto">
+              <path d="M0,0 L10,5 L0,10 Z" style="fill:var(--orange);"></path>
+            </marker>
+          </defs>
+          <path id="arrowPath" d="" style="stroke:var(--orange); stroke-width:3; fill:none; stroke-linecap:round; opacity:0;" marker-end="url(#arrowhead)"></path>
+        </svg>
+
+        <div class="var-row" id="varRow"></div>
+
+        <div class="ptr-row">
+          <div class="ptr-box" id="ptrBox">
+            <div class="pname">p : int*</div>
+            <div class="paddr">dirección propia: 0x2000</div>
+            <div class="pval empty" id="pval">sin inicializar</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="log" id="logText">Elige una variable a la izquierda para inicializar el puntero con <code>&</code>.</div>
+    </div>
+
+  </div>
+
+  <footer>Punteros en C++ · demo de clase</footer>
+
+<script>
+  const VARS = [
+    { name: 'edad',  addr: '0x1000', value: 25 },
+    { name: 'altura',addr: '0x1004', value: 170 },
+    { name: 'saldo', addr: '0x1008', value: 500 }
+  ];
+
+  const varBtns = document.getElementById('varBtns');
+  const varRow = document.getElementById('varRow');
+  const ptrBox = document.getElementById('ptrBox');
+  const pval = document.getElementById('pval');
+  const stage = document.getElementById('stage');
+  const arrowLayer = document.getElementById('arrowLayer');
+  const arrowPath = document.getElementById('arrowPath');
+  const readBtn = document.getElementById('readBtn');
+  const writeInput = document.getElementById('writeInput');
+  const writeBtn = document.getElementById('writeBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const logText = document.getElementById('logText');
+
+  let values = {};
+  let pointsTo = null;
+  let currentEndPt = null;
+  let animToken = 0;
+
+  function buildUI(){
+    varBtns.innerHTML = '';
+    varRow.innerHTML = '';
+    VARS.forEach(v => {
+      const btn = document.createElement('button');
+      btn.className = 'varBtn';
+      btn.dataset.name = v.name;
+      btn.textContent = `p = &${v.name}`;
+      btn.addEventListener('click', () => setPointer(v.name));
+      varBtns.appendChild(btn);
+
+      const box = document.createElement('div');
+      box.className = 'var-box';
+      box.id = 'var-' + v.name;
+      box.innerHTML = `
+        <div class="vname">${v.name} : int</div>
+        <div class="vaddr">${v.addr}</div>
+        <div class="vval">${v.value}</div>
+      `;
+      varRow.appendChild(box);
+    });
+  }
+
+  function sizeSvg(){
+    arrowLayer.setAttribute('width', stage.clientWidth);
+    arrowLayer.setAttribute('height', stage.clientHeight);
+  }
+
+  function pointOf(el, edge){
+    const cRect = stage.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2 - cRect.left;
+    const y = edge === 'top' ? r.top - cRect.top : r.bottom - cRect.top;
+    return { x, y };
+  }
+
+  function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+
+  function drawArrow(start, end){
+    const ctrl = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 - 40 };
+    arrowPath.setAttribute('d', `M ${start.x} ${start.y} Q ${ctrl.x} ${ctrl.y} ${end.x} ${end.y}`);
+  }
+
+  function animateArrow(start, fromEnd, toEnd, duration){
+    const myToken = ++animToken;
+    arrowPath.style.opacity = '1';
+    const t0 = performance.now();
+    function step(now){
+      if(myToken !== animToken) return;
+      const t = Math.min(1, (now - t0) / duration);
+      const e = easeOutCubic(t);
+      const cur = {
+        x: fromEnd.x + (toEnd.x - fromEnd.x) * e,
+        y: fromEnd.y + (toEnd.y - fromEnd.y) * e
+      };
+      drawArrow(start, cur);
+      if(t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function updateOpButtons(){
+    const enabled = pointsTo !== null;
+    readBtn.disabled = !enabled;
+    writeInput.disabled = !enabled;
+    writeBtn.disabled = !enabled;
+  }
+
+  function setPointer(name){
+    const varEl = document.getElementById('var-' + name);
+    const v = VARS.find(x => x.name === name);
+
+    document.querySelectorAll('.varBtn').forEach(b => b.classList.toggle('active', b.dataset.name === name));
+
+    const startPt = pointOf(ptrBox, 'top');
+    const endPt = pointOf(varEl, 'bottom');
+    const fromEnd = currentEndPt || startPt;
+
+    animateArrow(startPt, fromEnd, endPt, 550);
+    currentEndPt = endPt;
+
+    const wasNull = pointsTo === null;
+    pointsTo = name;
+
+    pval.classList.remove('empty');
+    pval.textContent = `guarda: ${v.addr}  →  ${name}`;
+
+    updateOpButtons();
+
+    logText.innerHTML = wasNull
+      ? `<b>p = &${name};</b> → el puntero <b>p</b> ahora guarda la dirección ${v.addr}, que es donde vive <b>${name}</b>. La flecha nace y apunta a ${name}.`
+      : `<b>p = &${name};</b> → p ya no apunta a lo de antes; ahora guarda la dirección de <b>${name}</b> (${v.addr}). La flecha se mueve.`;
+  }
+
+  function handleRead(){
+    if(pointsTo === null) return;
+    const el = document.getElementById('var-' + pointsTo);
+    const valEl = el.querySelector('.vval');
+    el.classList.add('pulse-read');
+    valEl.classList.remove('read-hl');
+    void valEl.offsetWidth; // reinicia la animación si se lee varias veces seguidas
+    valEl.classList.add('read-hl');
+    setTimeout(() => {
+      el.classList.remove('pulse-read');
+      valEl.classList.remove('read-hl');
+    }, 700);
+    const v = values[pointsTo];
+    logText.innerHTML = `<b>*p</b> → como p apunta a <b>${pointsTo}</b>, <b>*p vale ${v}</b> (el valor guardado en esa dirección).`;
+  }
+
+  function handleWrite(){
+    if(pointsTo === null) return;
+    const raw = writeInput.value;
+    const newVal = raw !== '' ? Number(raw) : Math.floor(Math.random() * 900) + 1;
+    values[pointsTo] = newVal;
+
+    const el = document.getElementById('var-' + pointsTo);
+    el.querySelector('.vval').textContent = newVal;
+    el.classList.add('pulse-write');
+    setTimeout(() => el.classList.remove('pulse-write'), 650);
+
+    logText.innerHTML = `<b>*p = ${newVal};</b> → esto no toca al puntero, cambia directamente el valor de <b>${pointsTo}</b>, porque *p significa "el valor en la dirección a la que apunta p".`;
+    writeInput.value = '';
+  }
+
+  function resetAll(){
+    animToken++;
+    values = {};
+    VARS.forEach(v => { values[v.name] = v.value; });
+    buildUI();
+    pointsTo = null;
+    currentEndPt = null;
+    arrowPath.style.opacity = '0';
+    arrowPath.setAttribute('d', '');
+    pval.classList.add('empty');
+    pval.textContent = 'sin inicializar';
+    updateOpButtons();
+    logText.innerHTML = 'Elige una variable a la izquierda para inicializar el puntero con <code>&</code>.';
+    sizeSvg();
+  }
+
+  readBtn.addEventListener('click', handleRead);
+  writeBtn.addEventListener('click', handleWrite);
+  resetBtn.addEventListener('click', resetAll);
+  window.addEventListener('resize', () => {
+    sizeSvg();
+    if(pointsTo !== null){
+      const startPt = pointOf(ptrBox, 'top');
+      const endPt = pointOf(document.getElementById('var-' + pointsTo), 'bottom');
+      currentEndPt = endPt;
+      drawArrow(startPt, endPt);
+    }
+  });
+
+  sizeSvg();
+  resetAll();
+</script>
+
+</body>
+</html>
