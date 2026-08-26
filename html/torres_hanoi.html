@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Torres de Hanoi — versión de colores</title>
+<style>
+  :root{
+    --azul:#2563eb;
+    --morado:#7c3aed;
+    --verde:#059669;
+    --coral:#ea580c;
+    --ink:#1e1b4b;
+    --ink-soft:#4c4a75;
+    --line:#e4e2f5;
+    --panel:#f6f5ff;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:#ffffff;
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    line-height:1.6;
+  }
+  .page{
+    max-width:760px;
+    margin:0 auto;
+    padding:56px 24px 80px;
+  }
+  .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    font-size:12px;
+    font-weight:600;
+    color:var(--morado);
+    margin:0 0 10px;
+  }
+  h1{
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:42px;
+    font-weight:400;
+    margin:0 0 18px;
+    color:var(--ink);
+  }
+  .lead{
+    font-size:16px;
+    color:var(--ink-soft);
+    max-width:620px;
+    margin:0 0 28px;
+  }
+  .facts{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:8px;
+  }
+  .facts div{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 16px;
+    min-width:130px;
+  }
+  .facts span{
+    display:block;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--ink-soft);
+    margin-bottom:2px;
+  }
+  .facts strong{
+    font-size:15px;
+    font-weight:600;
+  }
+  hr{
+    border:none;
+    border-top:1px solid var(--line);
+    margin:48px 0 40px;
+  }
+  .game-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+  }
+  .game-wrap h2{
+    font-family:Georgia,"Times New Roman",serif;
+    font-weight:400;
+    font-size:24px;
+    margin:0 0 8px;
+  }
+  .game-wrap .note{
+    font-size:14px;
+    color:var(--ink-soft);
+    max-width:520px;
+    margin:0 0 28px;
+  }
+  .game-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:28px;
+    width:100%;
+    max-width:520px;
+  }
+  .controls{
+    display:flex;
+    gap:8px;
+    margin-bottom:18px;
+  }
+  button{
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    padding:9px 14px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:#ffffff;
+    color:var(--ink);
+    cursor:pointer;
+    flex:1;
+  }
+  button:hover{ background:#efedff; }
+  #start-btn{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  #start-btn:hover{ background:#141233; }
+  .stats{
+    display:flex;
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .stat{
+    background:#ffffff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:8px 14px;
+    flex:1;
+    text-align:left;
+  }
+  .stat span{
+    display:block;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .stat strong{
+    font-family:"SFMono-Regular",Consolas,monospace;
+    font-size:19px;
+    font-weight:600;
+  }
+  #rods{
+    display:flex;
+    gap:14px;
+    justify-content:center;
+    margin-bottom:6px;
+  }
+  .rod{
+    width:74px;
+    display:flex;
+    flex-direction:column-reverse;
+    gap:3px;
+    padding:6px;
+    border-radius:8px 8px 3px 3px;
+    background:#ffffff;
+    border:1px solid var(--line);
+    border-bottom:4px solid var(--ink);
+    cursor:pointer;
+  }
+  .slot{
+    height:19px;
+    border-radius:50%;
+    border:1px solid rgba(0,0,0,0.12);
+  }
+  .slot.empty{
+    border:1px dashed var(--line);
+    background:transparent;
+  }
+  .rod-labels{
+    display:flex;
+    gap:14px;
+    justify-content:center;
+    margin-bottom:16px;
+  }
+  .rod-labels div{
+    width:74px;
+    text-align:center;
+    font-size:12px;
+    font-weight:600;
+  }
+  #status{
+    font-size:13px;
+    color:var(--ink-soft);
+    min-height:20px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <p class="eyebrow">Un clásico de las matemáticas recreativas</p>
+  <h1>Torres de Hanoi</h1>
+  <p class="lead">
+    Las Torres de Hanoi son un rompecabezas matemático que consiste en trasladar una torre de piezas
+    de una varilla a otra moviendo una sola pieza a la vez, y sin colocar nunca una pieza sobre otra
+    de forma inválida. En su versión original, hay tres varillas y discos de distintos tamaños que
+    deben apilarse de mayor a menor: solo se puede mover el disco que está en el tope de cada varilla,
+    y nunca se puede poner un disco grande sobre uno más pequeño.
+  </p>
+  <p class="lead">
+    Se atribuye al matemático francés Édouard Lucas, quien lo publicó en 1883 acompañado de una leyenda:
+    unos monjes en un templo mueven 64 discos de oro entre tres varillas de diamante, y cuando terminen
+    la tarea, el mundo llegará a su fin.
+  </p>
+  <div class="facts">
+    <div><span>Nombre</span><strong>Torres de Hanoi</strong></div>
+    <div><span>Inventor</span><strong>Édouard Lucas</strong></div>
+    <div><span>Año</span><strong>1883</strong></div>
+    <div><span>País</span><strong>Francia</strong></div>
+  </div>
+
+  <hr>
+
+  <div class="game-wrap">
+    <h2>Practica la lógica de una pila</h2>
+    <p class="note">
+      Esta versión adapta la idea a 4 varillas y fichas de colores en lugar de discos por tamaño.
+      Cada varilla admite hasta 10 fichas y solo puedes tomar o colocar la que está en el tope,
+      igual que en una pila (LIFO). El objetivo: dejar cada varilla con un solo color.
+    </p>
+
+    <div class="game-card">
+      <div class="controls">
+        <button id="start-btn">Iniciar</button>
+        <button id="shuffle-btn">Mezcla aleatoria</button>
+        <button id="reset-btn">Reiniciar</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span>Tiempo</span><strong id="timer">00:00.0</strong></div>
+        <div class="stat"><span>Mejor tiempo</span><strong id="best">--:--.-</strong></div>
+      </div>
+
+      <div id="rods"></div>
+      <div class="rod-labels" id="rod-labels"></div>
+      <div id="status">Pulsa iniciar para jugar</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const NAMES = ['Azul','Morado','Verde','Coral'];
+  const HEX = ['#2563eb','#7c3aed','#059669','#ea580c'];
+  const CAP = 10;
+  const DEFAULT_SEED = 1337;
+
+  let rods = [[],[],[],[]];
+  let selected = null;
+  let started = false;
+  let won = false;
+  let startTime = 0;
+  let timerHandle = null;
+  let bestMs = null;
+
+  function mulberry32(seed){
+    let a = seed;
+    return function(){
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function shuffle(arr, rng){
+    for(let i = arr.length - 1; i > 0; i--){
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+  function generateLayout(seed){
+    const pool = [];
+    for(let c = 0; c < 4; c++){ for(let k = 0; k < 5; k++) pool.push(c); }
+    shuffle(pool, mulberry32(seed));
+    const r = [[],[],[],[]];
+    pool.forEach((c, i) => r[i % 4].push(c));
+    return r;
+  }
+
+  const rodsEl = document.getElementById('rods');
+  const labelsEl = document.getElementById('rod-labels');
+  const timerEl = document.getElementById('timer');
+  const bestEl = document.getElementById('best');
+  const statusEl = document.getElementById('status');
+  const startBtn = document.getElementById('start-btn');
+
+  NAMES.forEach((n, i) => {
+    const d = document.createElement('div');
+    d.textContent = n;
+    d.style.color = HEX[i];
+    labelsEl.appendChild(d);
+  });
+
+  function fmt(ms){
+    const s = ms / 1000;
+    const m = Math.floor(s / 60);
+    const rem = (s - m * 60).toFixed(1);
+    return String(m).padStart(2,'0') + ':' + String(rem).padStart(4,'0');
+  }
+
+  function render(){
+    rodsEl.innerHTML = '';
+    rods.forEach((rod, idx) => {
+      const col = document.createElement('div');
+      col.className = 'rod';
+      col.style.borderBottomColor = HEX[idx];
+      col.onclick = () => handleClick(idx);
+      for(let slot = 0; slot < CAP; slot++){
+        const div = document.createElement('div');
+        if(slot < rod.length){
+          const isTop = slot === rod.length - 1;
+          div.className = 'slot';
+          div.style.background = HEX[rod[slot]];
+          if(isTop && selected === idx){
+            div.style.boxShadow = '0 0 0 2px #ffffff, 0 0 0 4px ' + '#1e1b4b';
+            div.style.transform = 'scale(1.08)';
+          }
+        } else {
+          div.className = 'slot empty';
+        }
+        col.appendChild(div);
+      }
+      rodsEl.appendChild(col);
+    });
+  }
+
+  function isMono(rod){
+    if(rod.length === 0) return true;
+    return rod.every(c => c === rod[0]);
+  }
+  function checkWin(){
+    return rods.every(isMono);
+  }
+
+  function handleClick(idx){
+    if(!started || won){
+      statusEl.textContent = 'Pulsa iniciar para jugar';
+      return;
+    }
+    if(selected === null){
+      if(rods[idx].length === 0){
+        statusEl.textContent = 'Esa varilla está vacía';
+        return;
+      }
+      selected = idx;
+      statusEl.textContent = 'Ficha seleccionada — elige la varilla destino';
+      render();
+      return;
+    }
+    if(selected === idx){
+      selected = null;
+      statusEl.textContent = 'Selección cancelada';
+      render();
+      return;
+    }
+    const from = rods[selected];
+    const to = rods[idx];
+    if(to.length >= CAP){
+      statusEl.textContent = 'Esa varilla ya tiene el máximo de 10 fichas';
+      selected = null;
+      render();
+      return;
+    }
+    to.push(from.pop());
+    selected = null;
+    statusEl.textContent = 'Ficha movida';
+    render();
+    if(checkWin()){
+      won = true;
+      clearInterval(timerHandle);
+      const elapsed = Date.now() - startTime;
+      timerEl.textContent = fmt(elapsed);
+      if(bestMs === null || elapsed < bestMs){
+        bestMs = elapsed;
+        bestEl.textContent = fmt(bestMs);
+        statusEl.textContent = '¡Resuelto! Nuevo mejor tiempo: ' + fmt(bestMs);
+      } else {
+        statusEl.textContent = '¡Resuelto! Tiempo: ' + fmt(elapsed) + ' — mejor tiempo sigue siendo ' + fmt(bestMs);
+      }
+      startBtn.textContent = 'Iniciar';
+      started = false;
+    }
+  }
+
+  function tick(){
+    if(!started || won) return;
+    timerEl.textContent = fmt(Date.now() - startTime);
+  }
+
+  startBtn.onclick = () => {
+    if(started) return;
+    started = true;
+    won = false;
+    selected = null;
+    startTime = Date.now();
+    statusEl.textContent = 'Juego iniciado — selecciona una varilla';
+    clearInterval(timerHandle);
+    timerHandle = setInterval(tick, 100);
+    render();
+  };
+
+  document.getElementById('shuffle-btn').onclick = () => {
+    clearInterval(timerHandle);
+    started = false;
+    won = false;
+    selected = null;
+    rods = generateLayout(Math.floor(Math.random() * 1e9));
+    timerEl.textContent = '00:00.0';
+    statusEl.textContent = 'Nueva mezcla lista — pulsa iniciar';
+    render();
+  };
+
+  document.getElementById('reset-btn').onclick = () => {
+    clearInterval(timerHandle);
+    started = false;
+    won = false;
+    selected = null;
+    rods = generateLayout(DEFAULT_SEED);
+    timerEl.textContent = '00:00.0';
+    statusEl.textContent = 'Pulsa iniciar para jugar';
+    render();
+  };
+
+  rods = generateLayout(DEFAULT_SEED);
+  render();
+})();
+</script>
+</body>
+</html>
