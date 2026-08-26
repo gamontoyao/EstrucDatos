@@ -1,0 +1,189 @@
+<div style="background: var(--surface-2); border-radius: 12px; border: 0.5px solid var(--border); padding: 1.25rem;">
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;">Visualizador interactivo de una pila (LIFO): push, pop y un demo de paréntesis balanceados</h2>
+
+<div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+  <select id="demo-select" style="flex:1; min-width:180px;">
+    <option value="manual">Modo manual</option>
+    <option value="platos">Analogía: platos en la cafetería</option>
+    <option value="undo">Analogía: Ctrl+Z (deshacer)</option>
+    <option value="parens">Caso de uso: paréntesis balanceados</option>
+  </select>
+  <button id="reset-btn"><i class="ti ti-refresh" style="font-size:16px; vertical-align:-2px; margin-right:4px;" aria-hidden="true"></i>Reiniciar</button>
+</div>
+
+<div id="manual-controls" style="display:flex; gap:8px; margin-bottom:16px;">
+  <input id="value-input" type="text" placeholder="valor a apilar" maxlength="6" style="flex:1;">
+  <button id="push-btn"><i class="ti ti-arrow-bar-to-up" style="font-size:16px; vertical-align:-2px; margin-right:4px;" aria-hidden="true"></i>push</button>
+  <button id="pop-btn"><i class="ti ti-arrow-bar-to-down" style="font-size:16px; vertical-align:-2px; margin-right:4px;" aria-hidden="true"></i>pop</button>
+</div>
+
+<div id="auto-controls" style="display:none; gap:8px; margin-bottom:16px; align-items:center;">
+  <button id="play-btn" style="flex:1;"><i class="ti ti-player-play" style="font-size:16px; vertical-align:-2px; margin-right:4px;" aria-hidden="true"></i>reproducir paso a paso</button>
+</div>
+
+<div style="display:flex; gap:20px; align-items:flex-end;">
+  <div style="flex:1;">
+    <div style="font-size:12px; color:var(--text-secondary); margin-bottom:6px;" id="source-label">secuencia</div>
+    <div id="source-display" style="font-family:var(--font-mono); font-size:14px; line-height:1.9; word-break:break-all; min-height:24px;"></div>
+  </div>
+  <div style="width:120px; display:flex; flex-direction:column-reverse; gap:6px; min-height:220px; border-left:0.5px solid var(--border); border-right:0.5px solid var(--border); border-bottom:2px solid var(--border-strong); padding:8px; align-items:stretch;" id="stack-well"></div>
+</div>
+<div style="display:flex; justify-content:center; margin-top:-4px;">
+  <span style="font-size:11px; color:var(--text-muted);">base de la pila</span>
+</div>
+
+<div style="margin-top:16px; padding-top:12px; border-top:0.5px solid var(--border);">
+  <div style="font-size:12px; color:var(--text-secondary); margin-bottom:4px;">registro de operaciones</div>
+  <div id="log" style="font-size:13px; color:var(--text-primary); min-height:20px;">pila vacía</div>
+</div>
+</div>
+
+<script>
+(function(){
+  let stack = [];
+  let mode = 'manual';
+  let seq = [];
+  let seqIdx = 0;
+  let error = false;
+
+  const well = document.getElementById('stack-well');
+  const log = document.getElementById('log');
+  const sourceDisplay = document.getElementById('source-display');
+  const sourceLabel = document.getElementById('source-label');
+  const manualControls = document.getElementById('manual-controls');
+  const autoControls = document.getElementById('auto-controls');
+  const playBtn = document.getElementById('play-btn');
+
+  const demos = {
+    platos: { label: 'orden en que se toman los platos', seq: ['push:plato 1','push:plato 2','push:plato 3','pop','pop','push:plato 4','pop','pop'] },
+    undo: { label: 'historial de acciones (Ctrl+Z)', seq: ['push:escribir','push:negrita','push:subrayar','pop','push:color','pop','pop'] },
+    parens: { label: '( a + ( b * c ) )', seq: null }
+  };
+
+  function renderStack(){
+    well.innerHTML = '';
+    if(stack.length === 0){
+      const empty = document.createElement('div');
+      empty.style.cssText = 'font-size:12px;color:var(--text-muted);text-align:center;padding:8px 0;';
+      empty.textContent = 'vacía';
+      well.appendChild(empty);
+      return;
+    }
+    stack.forEach((v, i) => {
+      const isTop = i === stack.length - 1;
+      const box = document.createElement('div');
+      box.style.cssText = 'border-radius:6px; padding:6px 4px; text-align:center; font-size:13px; font-weight:500; border:0.5px solid var(--border-strong);' +
+        (isTop ? 'background:var(--bg-accent); color:var(--text-accent); border-color:var(--border-accent);' : 'background:var(--surface-1); color:var(--text-primary);');
+      box.textContent = v + (isTop ? '  ← tope' : '');
+      well.appendChild(box);
+    });
+  }
+
+  function setLog(msg){ log.textContent = msg; }
+
+  function doPush(v){
+    stack.push(v);
+    setLog('push(' + v + ')');
+    renderStack();
+  }
+  function doPop(){
+    if(stack.length === 0){ setLog('pop() sobre pila vacía — no hay nada que sacar'); return null; }
+    const v = stack.pop();
+    setLog('pop() → ' + v);
+    renderStack();
+    return v;
+  }
+
+  document.getElementById('push-btn').onclick = () => {
+    const input = document.getElementById('value-input');
+    const v = input.value.trim();
+    if(!v){ setLog('escribe un valor antes de hacer push'); return; }
+    doPush(v);
+    input.value = '';
+    input.focus();
+  };
+  document.getElementById('pop-btn').onclick = () => doPop();
+  document.getElementById('value-input').addEventListener('keydown', e => {
+    if(e.key === 'Enter') document.getElementById('push-btn').click();
+  });
+
+  function resetAll(){
+    stack = [];
+    seqIdx = 0;
+    error = false;
+    renderStack();
+    setLog('pila vacía');
+    renderSource();
+  }
+  document.getElementById('reset-btn').onclick = resetAll;
+
+  function renderSource(){
+    if(mode === 'parens'){
+      const chars = '( a + ( b * c ) )'.split('');
+      sourceDisplay.innerHTML = chars.map((c, i) => {
+        const done = i < seqIdx;
+        const current = i === seqIdx;
+        let style = 'padding:1px 3px; border-radius:3px;';
+        if(current) style += 'background:var(--bg-accent); color:var(--text-accent);';
+        else if(done) style += 'color:var(--text-muted);';
+        return '<span style="' + style + '">' + (c===' '?'&nbsp;':c) + '</span>';
+      }).join('');
+    } else if(demos[mode]){
+      sourceDisplay.innerHTML = demos[mode].seq.map((op,i) => {
+        const done = i < seqIdx;
+        const current = i === seqIdx;
+        let style = 'display:inline-block; margin:2px 6px 2px 0; padding:1px 5px; border-radius:3px; font-size:12px;';
+        if(current) style += 'background:var(--bg-accent); color:var(--text-accent);';
+        else if(done) style += 'color:var(--text-muted);';
+        return '<span style="' + style + '">' + op.replace('push:','push(').replace(/^pop$/,'pop()') + (op.startsWith('push')?')':'') + '</span>';
+      }).join('');
+    } else {
+      sourceDisplay.innerHTML = '';
+    }
+  }
+
+  function stepAuto(){
+    if(error) return;
+    if(mode === 'parens'){
+      const chars = '( a + ( b * c ) )'.split('');
+      if(seqIdx >= chars.length){ setLog(stack.length === 0 ? 'listo: paréntesis balanceados' : 'quedaron paréntesis sin cerrar'); return; }
+      const c = chars[seqIdx];
+      if(c === '('){ doPush('('); }
+      else if(c === ')'){
+        if(stack.length === 0){ setLog('error: se intentó cerrar sin abrir'); error = true; }
+        else { doPop(); }
+      } else {
+        setLog('se ignora "' + c + '" (no es paréntesis)');
+      }
+      seqIdx++;
+    } else if(demos[mode]){
+      const list = demos[mode].seq;
+      if(seqIdx >= list.length){ setLog('secuencia terminada'); return; }
+      const op = list[seqIdx];
+      if(op.startsWith('push:')) doPush(op.slice(5));
+      else doPop();
+      seqIdx++;
+    }
+    renderSource();
+  }
+  playBtn.onclick = stepAuto;
+
+  document.getElementById('demo-select').onchange = (e) => {
+    mode = e.target.value;
+    resetAll();
+    if(mode === 'manual'){
+      manualControls.style.display = 'flex';
+      autoControls.style.display = 'none';
+      sourceLabel.textContent = 'secuencia';
+      sourceDisplay.innerHTML = '';
+    } else {
+      manualControls.style.display = 'none';
+      autoControls.style.display = 'flex';
+      sourceLabel.textContent = mode === 'parens' ? demos.parens.label : demos[mode].label;
+      renderSource();
+    }
+  };
+
+  renderStack();
+})();
+</script>
